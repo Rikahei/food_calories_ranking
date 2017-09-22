@@ -24,7 +24,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.example.hei.food_calories_ranking.R.id.current_location_storage;
@@ -37,8 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String TAG = MainActivity.class.getSimpleName();
     private String mApiLoc;
-    ArrayList<FoodBrandClass> restaurantsList = new ArrayList<>();
-    public String resName;
+
 
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -54,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     Food i4 = new Food("牛焼肉定食", "松屋", 776, 590);
 
     ArrayList<Food> foods = new ArrayList<>();
+    List<FoodBrandClass> restaurantsList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,8 +99,6 @@ public class MainActivity extends AppCompatActivity {
             getApiLoc();
             new GetMapData().execute();
             Log.v("Tag", "mApiLoc =_ " + mApiLoc);
-
-
         }
     };
 
@@ -113,12 +110,11 @@ public class MainActivity extends AppCompatActivity {
         // https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=35.7890371,139.8959144&radius=500&type=restaurant&keyword=Gyudon%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY
 
         setApiUrl.setText("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="
-                + getLatLong.getText() + "&radius=500&type=restaurant&keyword=Gyudon%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY");
+                + getLatLong.getText() + "&radius=1000&type=restaurant&keyword=Gyudon%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY");
         // get text in google_api_url.
         mApiLoc = setApiUrl.getText().toString();
         return mApiLoc;
     }
-
 
     // Trigger new location updates at interval
     protected void startLocationUpdates() {
@@ -165,6 +161,8 @@ public class MainActivity extends AppCompatActivity {
 
     public class GetMapData extends AsyncTask<String, Void, String> {
 
+        String apiResult = null;
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -177,7 +175,6 @@ public class MainActivity extends AppCompatActivity {
             // Making a request to url and getting response
             String url = mApiLoc;
             String jsonStr = sh.makeServiceCall(url);
-
 
             Log.e(TAG, "Response from url: " + jsonStr);
             if (jsonStr != null) {
@@ -192,10 +189,18 @@ public class MainActivity extends AppCompatActivity {
                         String name = currentData.getString("name");
                         String rating = currentData.getString("rating");
 
+                        if (name.contains("すき家")){
+                            apiResult = apiResult + "すき家";
+                        }
+                        if (name.contains("松屋")){
+                            apiResult = apiResult + "松屋";
+                        }
+
 //                        FoodBrandClass restaurant = new FoodBrandClass(name, rating);
-//
 //                        restaurantsList.add(restaurant);
-                        resName = name;
+
+                        Log.d("Tag", "forLoop =_ " + name);
+
                     }
                 } catch (final JSONException e) {
                     Log.e(TAG, "Json parsing error: " + e.getMessage());
@@ -219,26 +224,40 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.LENGTH_LONG).show();
                     }
                 });
-
             }
-            return resName;
+            return apiResult;
         }
 
             @Override
-            protected void onPostExecute (String resName){
+            protected void onPostExecute (String apiResult){
 //               super.onPostExecute();
 //            ListAdapter adapter = new SimpleAdapter(MainActivity.this, restaurantsList,
 //                    R.layout.main_list_item, new String[]{ "name","rating"},
 //                    new int[]{R.id.food_name, R.id.food_brand});
 //            listView.setAdapter(adapter);
 
-                boolean checkSukiya = resName.contains("すき家");
+                Log.d("Tag", "apiResult =_ " + apiResult);
 
-                if (checkSukiya) {
+//                boolean checkSukiya = restaurantsList.toString().contains("すき家");
+//                boolean checkMatsuya = restaurantsList.contains("松屋");
+//                int arrayListSize = restaurantsList.size();
+
+//                Log.v("Tag", "result =_ contained " + checkSukiya);
+//                Log.d("Tag", "result =_ contained " + checkMatsuya);
+//                Log.d("Tag", "result =_ Size " + arrayListSize);
+
+//                for (int i = 0; i<arrayListSize; i++){
+//                    Log.v ("Tag", "for_loop =_ " + restaurantsList.get(i).getRating()) ;
+//                }
+
+                if (apiResult.contains("すき家")) {
                     foods.add(i1);
                     foods.add(i2);
-                    Log.v("Tag", "result =_ contained" + resName);
+                }
 
+                if (apiResult.contains("松屋")) {
+                    foods.add(i3);
+                    foods.add(i4);
                 }
 
                 // Create the adapter to convert the array to views
@@ -251,6 +270,7 @@ public class MainActivity extends AppCompatActivity {
 //                Log.v("Tag", "result =_ " + restaurantsList);
             }
         }
+
     }
 
 

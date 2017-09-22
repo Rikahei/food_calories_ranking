@@ -8,11 +8,11 @@ public class FoodBrandClass {
     private String mFoodBrand;
     private String mRating;
 
-    public FoodBrandClass(String foodBrand, String rating){
-        foodBrand = mFoodBrand;
+    public FoodBrandClass(String FoodBrand, String rating){
+        FoodBrand = mFoodBrand;
         rating = mRating;
     }
 
-    public String getFoodBrand (){ return mFoodBrand;}
+    public String getFoodBrand(){ return mFoodBrand;}
     public String getRating() { return mRating;}
 }
