@@ -1,10 +1,10 @@
 package com.example.hei.food_calories_ranking;
 
 import android.location.Location;
+import android.location.LocationProvider;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ListView;
@@ -14,20 +14,20 @@ import android.widget.Toast;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static com.example.hei.food_calories_ranking.R.id.current_location_storage;
-import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
 // Google map android api key : AIzaSyBrl4wNKulb3yoXN_I7jxpALDhrFiVzFg0
 // Google map web service api key : AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY
@@ -37,10 +37,11 @@ public class MainActivity extends AppCompatActivity {
     private String TAG = MainActivity.class.getSimpleName();
     private String mApiLoc;
 
-
     private LocationRequest mLocationRequest;
+    private LocationProvider mLocationProvider;
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationCallback mLocationCallback;
+    private FusedLocationProviderClient mRequestingLocationUpdates;
 
     private long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
     private long FASTEST_INTERVAL = 2000; /* 2 sec */
@@ -50,15 +51,44 @@ public class MainActivity extends AppCompatActivity {
     Food i2 = new Food("ねぎ玉牛丼-並盛", "すき家", 768, 470);
     Food i3 = new Food("牛めし-並盛", "松屋", 709, 290);
     Food i4 = new Food("牛焼肉定食", "松屋", 776, 590);
+    Food i5 = new Food("豚生姜焼き定食-並盛", "吉野家", 627, 490);
+    Food i6 = new Food("秋のベジ牛定食-並盛", "吉野家", 651, 590);
 
     ArrayList<Food> foods = new ArrayList<>();
-    List<FoodBrandClass> restaurantsList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        startLocationUpdates();
+
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        mFusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                        // New location has now been determined
+                        // Location Storage
+                        String latitude = Double.toString(location.getLatitude());
+                        String longitude = Double.toString(location.getLongitude());
+
+                        TextView currentLocationStorage = (TextView) findViewById(current_location_storage);
+                        currentLocationStorage.setText(latitude + "," + longitude);
+                        Log.v("Tag", "currentLocation =_ " + currentLocationStorage);
+                        }
+                    }
+                });
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(mLocationRequest);
+
+        SettingsClient client = LocationServices.getSettingsClient(this);
+        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+
+
+//        startLocationUpdates();
 
 //        // Construct the data source
 //        final ArrayList<Food> foods = new ArrayList<>();
@@ -80,14 +110,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        stopLocationUpdates();
-    }
 
-    private void stopLocationUpdates() {
-        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+    protected void createLocationRequest() {
+        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(10 * 1000);
+        mLocationRequest.setFastestInterval(5 * 1000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
     Handler handler = new Handler();
@@ -105,58 +133,14 @@ public class MainActivity extends AppCompatActivity {
     public String getApiLoc() {
         //Constructor of current location storage.
         TextView getLatLong = (TextView) findViewById(current_location_storage);
-        TextView setApiUrl = (TextView) findViewById(R.id.google_api_url);
 
         // https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=35.7890371,139.8959144&radius=500&type=restaurant&keyword=Gyudon%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY
 
-        setApiUrl.setText("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="
-                + getLatLong.getText() + "&radius=1000&type=restaurant&keyword=Gyudon%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY");
+//        setApiUrl.setText("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="
+//                + getLatLong.getText() + "&radius=1000&type=restaurant&keyword=Gyudon%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY");
         // get text in google_api_url.
-        mApiLoc = setApiUrl.getText().toString();
+        mApiLoc = getLatLong.getText().toString();
         return mApiLoc;
-    }
-
-    // Trigger new location updates at interval
-    protected void startLocationUpdates() {
-
-        // Create the location request to start receiving updates
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(UPDATE_INTERVAL);
-        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
-
-        // Create LocationSettingsRequest object using location request
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
-        builder.addLocationRequest(mLocationRequest);
-        LocationSettingsRequest locationSettingsRequest = builder.build();
-
-        // Check whether location settings are satisfied
-        // https://developers.google.com/android/reference/com/google/android/gms/location/SettingsClient
-        SettingsClient settingsClient = LocationServices.getSettingsClient(this);
-        settingsClient.checkLocationSettings(locationSettingsRequest);
-
-        // new Google API SDK v11 uses getFusedLocationProviderClient(this)
-        getFusedLocationProviderClient(this).requestLocationUpdates(mLocationRequest, new LocationCallback() {
-                    @Override
-                    public void onLocationResult(LocationResult locationResult) {
-                        // do work here
-                        onLocationChanged(locationResult.getLastLocation());
-                    }
-                },
-                Looper.myLooper());
-    }
-
-    public void onLocationChanged(Location location) {
-        // New location has now been determined
-        String msg = "Updated Location";
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-        // Location Storage
-        String latitude = Double.toString(location.getLatitude());
-        String longitude = Double.toString(location.getLongitude());
-
-        TextView currentLocationStorage = (TextView) findViewById(current_location_storage);
-        currentLocationStorage.setText(latitude + "," + longitude);
-        Log.v("Tag", "currentLocation =_ " + currentLocationStorage);
     }
 
     public class GetMapData extends AsyncTask<String, Void, String> {
@@ -173,7 +157,8 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(String... arg0) {
             HttpHandler sh = new HttpHandler();
             // Making a request to url and getting response
-            String url = mApiLoc;
+            String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + mApiLoc
+                    +"&radius=1000&type=restaurant&keyword=Gyudon%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY";
             String jsonStr = sh.makeServiceCall(url);
 
             Log.e(TAG, "Response from url: " + jsonStr);
@@ -194,6 +179,9 @@ public class MainActivity extends AppCompatActivity {
                         }
                         if (name.contains("松屋")){
                             apiResult = apiResult + "松屋";
+                        }
+                        if (name.contains("吉野家")){
+                            apiResult = apiResult + "吉野家";
                         }
 
 //                        FoodBrandClass restaurant = new FoodBrandClass(name, rating);
@@ -260,17 +248,17 @@ public class MainActivity extends AppCompatActivity {
                     foods.add(i4);
                 }
 
+                if (apiResult.contains("吉野家")) {
+                    foods.add(i5);
+                    foods.add(i6);
+                }
+
                 // Create the adapter to convert the array to views
                 FoodAdapter adapter = new FoodAdapter(MainActivity.this, foods);
                 // Attach the adapter to a ListView
                 ListView listView = (ListView) findViewById(R.id.food_list_view);
                 listView.setAdapter(adapter);
-
-//
-//                Log.v("Tag", "result =_ " + restaurantsList);
             }
-        }
-
     }
-
+}
 
