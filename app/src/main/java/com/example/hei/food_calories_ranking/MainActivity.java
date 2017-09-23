@@ -219,10 +219,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             protected void onPostExecute (String apiResult){
 //               super.onPostExecute();
-//            ListAdapter adapter = new SimpleAdapter(MainActivity.this, restaurantsList,
-//                    R.layout.main_list_item, new String[]{ "name","rating"},
-//                    new int[]{R.id.food_name, R.id.food_brand});
-//            listView.setAdapter(adapter);
 
                 Log.d("Tag", "apiResult =_ " + apiResult);
 
