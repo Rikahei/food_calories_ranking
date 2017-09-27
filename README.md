@@ -12,6 +12,6 @@ All data was collected on fast food resturant offical websites. Data update is n
 Base on API feedback, the app will show nearest meal to the user within a range.
 
 ## Algorithm
-
+TBC
 
 
