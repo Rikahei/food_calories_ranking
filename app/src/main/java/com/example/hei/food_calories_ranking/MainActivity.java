@@ -3,19 +3,21 @@ package com.example.hei.food_calories_ranking;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationProvider;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
@@ -29,35 +31,38 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import static com.example.hei.food_calories_ranking.R.id.current_location_storage;
+import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
 // Google map android api key : AIzaSyBrl4wNKulb3yoXN_I7jxpALDhrFiVzFg0
 // Google map web service api key : AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY
+// https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=35.7890371,139.8959144
+// &radius=500&type=restaurant&keyword=Gyudon%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY
 
 public class MainActivity extends AppCompatActivity {
 
     private String TAG = MainActivity.class.getSimpleName();
+    // Variable for api location.
     private String mApiLoc;
+    // Variable for Spinner set distance.
+    public String userSetDistance;
 
+    // Location request variable
     private LocationRequest mLocationRequest;
-    private LocationProvider mLocationProvider;
     private FusedLocationProviderClient mFusedLocationClient;
-    private LocationCallback mLocationCallback;
-    private FusedLocationProviderClient mRequestingLocationUpdates;
 
-    private long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
-    private long FASTEST_INTERVAL = 2000; /* 2 sec */
 
     // Arraylist constructor for calories data.
-    Food sukiya_i1 = new Food("牛丼-並盛", "すき家", 650, 350);
-    Food sukiya_i2 = new Food("ねぎ玉牛丼-並盛", "すき家", 768, 470);
-    Food matsuya_i1 = new Food("牛めし-並盛", "松屋", 709, 290);
-    Food matsuya_i2 = new Food("牛焼肉定食", "松屋", 776, 590);
-    Food yoshinoya_i1 = new Food("豚生姜焼き定食-並盛", "吉野家", 627, 490);
-    Food yoshinoya_i2 = new Food("秋のベジ牛定食-並盛", "吉野家", 651, 590);
-    Food macdon_i1 = new Food("フィレオフィッシュ", "マクドナルド", 341, 320);
-    Food macdon_i2 = new Food("てりやきマックバーガー", "マクドナルド", 496, 320);
+    Food sukiya_i1 = new Food("牛丼-並盛", "すき家", 650, 350, 0, R.drawable.dish_ratio_00);
+    Food sukiya_i2 = new Food("ねぎ玉牛丼-並盛", "すき家", 768, 470, 30, R.drawable.dish_ratio_30);
+    Food matsuya_i1 = new Food("牛めし-並盛", "松屋", 709, 290, 0, R.drawable.dish_ratio_00);
+    Food matsuya_i2 = new Food("牛焼肉定食", "松屋", 776, 590, 30, R.drawable.dish_ratio_30);
+    Food yoshinoya_i1 = new Food("豚生姜焼き定食-並盛", "吉野家", 627, 490, 30, R.drawable.dish_ratio_30);
+    Food yoshinoya_i2 = new Food("秋のベジ牛定食-並盛", "吉野家", 651, 590, 50, R.drawable.dish_ratio_50);
+    Food macdon_i1 = new Food("フィレオフィッシュ", "マクドナルド", 341, 320, 0, R.drawable.dish_ratio_00);
+    Food macdon_i2 = new Food("てりやきマックバーガー", "マクドナルド", 496, 320, 0, R.drawable.dish_ratio_00);
     // Arraylist constructor for array adapter.
     ArrayList<Food> foods = new ArrayList<>();
 
@@ -66,9 +71,35 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        createLocationRequest();
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        Spinner distanceSpinner = (Spinner) findViewById(R.id.distance_spinner);
+        // Create an ArrayAdapter using the string array and a default spinner layout
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.distance_array, android.R.layout.simple_spinner_item);
+        // Specify the layout to use when the list of choices appears
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner
+        distanceSpinner.setAdapter(adapter);
+
+        // distanceSpinner onclick action
+        distanceSpinner.setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView adapterView, View view, int position, long id) {
+                Toast.makeText(MainActivity.this, "Range filter set to : " + adapterView.getSelectedItem().toString(), Toast.LENGTH_SHORT).show();
+                handler.postDelayed(runnable, 1 * 1000);
+            }
+
+            public void onNothingSelected(AdapterView arg0) {
+                Toast.makeText(MainActivity.this, "Please set the range filter ", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Get last know location
+        mFusedLocationClient = getFusedLocationProviderClient(this);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -101,7 +132,8 @@ public class MainActivity extends AppCompatActivity {
 
         SettingsClient client = LocationServices.getSettingsClient(this);
         Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
-        handler.postDelayed(runnable, 2 * 1000);
+
+        handler.postDelayed(runnable, 1 * 1000);
     }
 
     protected void createLocationRequest() {
@@ -111,31 +143,39 @@ public class MainActivity extends AppCompatActivity {
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
+    // Delay run handler
     Handler handler = new Handler();
-
     public final Runnable runnable = new Runnable() {
-
         @Override
         public void run() {
+            // Clear arraylist
+            foods.clear();
+            // Get user location
             getApiLoc();
+            // Get user set distance
+            getUserSetDistance();
+            // process AsyncTask to get api information
             new GetMapData().execute();
             Log.v("Tag", "mApiLoc =_ " + mApiLoc);
         }
     };
 
+    // get user location method
     public String getApiLoc() {
         //Constructor of current location storage.
         TextView getLatLong = (TextView) findViewById(current_location_storage);
-
-//         https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=35.7890371,139.8959144&radius=500&type=restaurant&keyword=Gyudon%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY
-//
-//        setApiUrl.setText("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="
-//                + getLatLong.getText() + "&radius=1000&type=restaurant&keyword=Gyudon%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY");
-//         get text in google_api_url.
         mApiLoc = getLatLong.getText().toString();
         return mApiLoc;
     }
 
+    // get user spinner distance
+    public String getUserSetDistance() {
+        Spinner spinner = (Spinner)findViewById(R.id.distance_spinner);
+        userSetDistance = spinner.getSelectedItem().toString();
+        return userSetDistance;
+    }
+
+    // AsyncTask to download json array.
     public class GetMapData extends AsyncTask<String, Void, String> {
         // Result storage variable.
         String apiResult = null;
@@ -143,15 +183,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            Toast.makeText(MainActivity.this, "Json Data is downloading", Toast.LENGTH_LONG).show();
+            Toast.makeText(MainActivity.this, "Data is downloading", Toast.LENGTH_SHORT).show();
         }
 
         @Override
         protected String doInBackground(String... arg0) {
             HttpHandler sh = new HttpHandler();
+
             // Making a request to url and getting response
-            String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + mApiLoc
-                    +"&radius=600&type=restaurant&keyword=fastfood%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY";
+            String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + mApiLoc +
+                    "&radius=" + userSetDistance + "&type=restaurant&keyword=fastfood%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY";
             String jsonStr = sh.makeServiceCall(url);
 
             Log.e(TAG, "Response from url: " + jsonStr);
@@ -174,7 +215,6 @@ public class MainActivity extends AppCompatActivity {
                         if (name.contains("吉野家")){
                             apiResult = apiResult + "吉野家";
                         }
-
                         if (name.contains("マクドナルド")){
                             apiResult = apiResult + "マクドナルド";
                         }
@@ -207,28 +247,38 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             protected void onPostExecute (String apiResult){
-//               super.onPostExecute();
+               // super.onPostExecute();
 
-                // if logic for display data in UI.
-                if (apiResult.contains("すき家")) {
-                    foods.add(sukiya_i1);
-                    foods.add(sukiya_i2);
+                if (apiResult != null){
+                        // if logic for display data in UI.
+                        if (apiResult.contains("すき家")) {
+                            foods.add(sukiya_i1);
+                            foods.add(sukiya_i2);
+                        }
+
+                        if (apiResult.contains("松屋")) {
+                            foods.add(matsuya_i1);
+                            foods.add(matsuya_i2);
+                        }
+
+                        if (apiResult.contains("吉野家")) {
+                            foods.add(yoshinoya_i1);
+                            foods.add(yoshinoya_i2);
+                        }
+
+                        if (apiResult.contains("マクドナルド")) {
+                            foods.add(macdon_i1);
+                            foods.add(macdon_i2);
+                        }
+                    } else {
+                        Toast.makeText(MainActivity.this, "No restaurant was found", Toast.LENGTH_LONG).show();
+                        Log.v("TAG", "apiResult error :=_  " + apiResult);
                 }
 
-                if (apiResult.contains("松屋")) {
-                    foods.add(matsuya_i1);
-                    foods.add(matsuya_i2);
-                }
-
-                if (apiResult.contains("吉野家")) {
-                    foods.add(yoshinoya_i1);
-                    foods.add(yoshinoya_i2);
-                }
-
-                if (apiResult.contains("マクドナルド")) {
-                    foods.add(macdon_i1);
-                    foods.add(macdon_i2);
-                }
+                // Sorts the array list
+                Collections.sort(foods);
+                // Sorts the array list using comparator
+                Collections.sort(foods, new Food());
 
                 // Create the adapter to convert the array to views
                 FoodAdapter adapter = new FoodAdapter(MainActivity.this, foods);
@@ -236,6 +286,7 @@ public class MainActivity extends AppCompatActivity {
                 ListView listView = (ListView) findViewById(R.id.food_list_view);
                 listView.setAdapter(adapter);
             }
-    }
+        }
 }
+
 

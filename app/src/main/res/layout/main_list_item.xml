@@ -13,10 +13,10 @@
         android:background="#f5f5f5">
 
         <ImageView
-            android:id="@+id/picture"
+            android:id="@+id/veg_rating"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:src="@drawable/ic_local_dining_black_24dp">
+            android:src="@drawable/dish_ratio_00">
         </ImageView>
 
         <LinearLayout
