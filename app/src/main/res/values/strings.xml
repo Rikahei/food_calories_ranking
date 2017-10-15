@@ -2,9 +2,9 @@
     <string name="app_name">Food Ranking</string>
 
     <string-array name="distance_array">
-        <item>250</item>
-        <item>500</item>
-        <item>750</item>
         <item>1000</item>
+        <item>750</item>
+        <item>500</item>
+        <item>250</item>
     </string-array>
 </resources>

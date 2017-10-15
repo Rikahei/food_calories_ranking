@@ -53,16 +53,17 @@ public class MainActivity extends AppCompatActivity {
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationClient;
 
-
     // Arraylist constructor for calories data.
-    Food sukiya_i1 = new Food("牛丼-並盛", "すき家", 650, 350, 0, R.drawable.dish_ratio_00);
-    Food sukiya_i2 = new Food("ねぎ玉牛丼-並盛", "すき家", 768, 470, 30, R.drawable.dish_ratio_30);
-    Food matsuya_i1 = new Food("牛めし-並盛", "松屋", 709, 290, 0, R.drawable.dish_ratio_00);
-    Food matsuya_i2 = new Food("牛焼肉定食", "松屋", 776, 590, 30, R.drawable.dish_ratio_30);
-    Food yoshinoya_i1 = new Food("豚生姜焼き定食-並盛", "吉野家", 627, 490, 30, R.drawable.dish_ratio_30);
-    Food yoshinoya_i2 = new Food("秋のベジ牛定食-並盛", "吉野家", 651, 590, 50, R.drawable.dish_ratio_50);
-    Food macdon_i1 = new Food("フィレオフィッシュ", "マクドナルド", 341, 320, 0, R.drawable.dish_ratio_00);
-    Food macdon_i2 = new Food("てりやきマックバーガー", "マクドナルド", 496, 320, 0, R.drawable.dish_ratio_00);
+    Food sukiya_i1 = new Food("牛丼-並盛", "すき家", 650, 350, 0, R.drawable.dish_ratio_00, R.drawable.gyuu_don_001);
+    Food sukiya_i2 = new Food("ねぎ玉牛丼-並盛", "すき家", 768, 470, 30, R.drawable.dish_ratio_30, R.drawable.gyuu_don_002);
+    Food sukiya_i3 = new Food("豚丼-並盛", "すき家", 700, 4350, 0, R.drawable.dish_ratio_30, R.drawable.gyuu_don_004);
+    Food matsuya_i1 = new Food("牛めし-並盛", "松屋", 709, 290, 0, R.drawable.dish_ratio_00, R.drawable.gyuu_don_001);
+    Food matsuya_i2 = new Food("牛焼肉定食", "松屋", 776, 590, 30, R.drawable.dish_ratio_30, R.drawable.gyuu_don_003);
+    Food matsuya_i3 = new Food("豚バラ生姜焼定食-並盛", "松屋", 835, 590, 30, R.drawable.dish_ratio_30, R.drawable.gyuu_don_003);
+    Food yoshinoya_i1 = new Food("豚生姜焼き定食-並盛", "吉野家", 627, 490, 30, R.drawable.dish_ratio_30 , R.drawable.gyuu_don_003);
+    Food yoshinoya_i2 = new Food("秋のベジ牛定食-並盛", "吉野家", 651, 590, 50, R.drawable.dish_ratio_50, R.drawable.gyuu_don_s001);
+    Food yoshinoya_i3 = new Food("牛丼-並盛", "吉野家", 669, 380, 0, R.drawable.dish_ratio_00, R.drawable.gyuu_don_001);
+
     // Arraylist constructor for array adapter.
     ArrayList<Food> foods = new ArrayList<>();
 
@@ -86,11 +87,18 @@ public class MainActivity extends AppCompatActivity {
         distanceSpinner.setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
             public void onItemSelected(AdapterView adapterView, View view, int position, long id) {
                 Toast.makeText(MainActivity.this, "Range filter set to : " + adapterView.getSelectedItem().toString(), Toast.LENGTH_SHORT).show();
-                handler.postDelayed(runnable, 1 * 1000);
+                // Clear arraylist
+                foods.clear();
+                // Get user location
+                getApiLoc();
+                // Get user set distance
+                getUserSetDistance();
+                // process AsyncTask to get api information
+                new GetMapData().execute();
             }
 
             public void onNothingSelected(AdapterView arg0) {
-                Toast.makeText(MainActivity.this, "Please set the range filter ", Toast.LENGTH_SHORT).show();
+                userSetDistance = "1000";
             }
         });
 
@@ -192,7 +200,7 @@ public class MainActivity extends AppCompatActivity {
 
             // Making a request to url and getting response
             String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + mApiLoc +
-                    "&radius=" + userSetDistance + "&type=restaurant&keyword=fastfood%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY";
+                    "&radius=" + userSetDistance + "&type=restaurant&keyword=fastfood&Gyudon&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY";
             String jsonStr = sh.makeServiceCall(url);
 
             Log.e(TAG, "Response from url: " + jsonStr);
@@ -254,22 +262,26 @@ public class MainActivity extends AppCompatActivity {
                         if (apiResult.contains("すき家")) {
                             foods.add(sukiya_i1);
                             foods.add(sukiya_i2);
+                            foods.add(sukiya_i3);
                         }
 
                         if (apiResult.contains("松屋")) {
                             foods.add(matsuya_i1);
                             foods.add(matsuya_i2);
+                            foods.add(matsuya_i3);
                         }
 
                         if (apiResult.contains("吉野家")) {
                             foods.add(yoshinoya_i1);
                             foods.add(yoshinoya_i2);
-                        }
+                            foods.add(yoshinoya_i3);
 
-                        if (apiResult.contains("マクドナルド")) {
-                            foods.add(macdon_i1);
-                            foods.add(macdon_i2);
                         }
+// suspended Macdonald foods
+//                        if (apiResult.contains("マクドナルド")) {
+//                            foods.add(macdon_i1);
+//                            foods.add(macdon_i2);
+//                        }
                     } else {
                         Toast.makeText(MainActivity.this, "No restaurant was found", Toast.LENGTH_LONG).show();
                         Log.v("TAG", "apiResult error :=_  " + apiResult);

@@ -15,9 +15,11 @@ public class Food implements Comparator<Food>, Comparable<Food>{
     private int mPrice;
     private int mRating;
     private int mRatingResId;
+    private int mImageViewId;
 
     // Create new Food object.
-    public Food(String foodName, String foodBrand, int foodCalories, int foodPrice, int vegRating, int ratingResId) {
+    public Food(String foodName, String foodBrand, int foodCalories, int foodPrice, int vegRating, int ratingResId,
+    int imageViewId) {
 
         mFoodName = foodName;
         mFoodBrand = foodBrand;
@@ -25,6 +27,7 @@ public class Food implements Comparator<Food>, Comparable<Food>{
         mPrice = foodPrice;
         mRating = vegRating;
         mRatingResId = ratingResId;
+        mImageViewId = imageViewId;
     }
 
     public String getFoodName() {return mFoodName;}
@@ -33,6 +36,7 @@ public class Food implements Comparator<Food>, Comparable<Food>{
     public int getFoodPrice() {return mPrice;}
     public int getVegRating() {return mRating;}
     public int getRatingResId() {return mRatingResId;}
+    public int getImageViewId() {return mImageViewId;}
 
     @Override
     public int compareTo(@NonNull Food o) {

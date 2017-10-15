@@ -25,18 +25,22 @@ public class FoodAdapter extends ArrayAdapter<Food> {
         }
 
         // Lookup view for data population
-        TextView foodName = (TextView) convertView.findViewById(R.id.food_name);
-        TextView foodBrand = (TextView) convertView.findViewById(R.id.food_brand);
-        TextView foodCalories = (TextView) convertView.findViewById(R.id.food_calories);
-        TextView foodPrice = (TextView) convertView.findViewById(R.id.food_price);
-        ImageView vegRating = (ImageView) convertView.findViewById(R.id.veg_rating);
+        ViewHolder holder = new ViewHolder();
+        holder.foodName = (TextView) convertView.findViewById(R.id.food_name);
+        holder.foodBrand = (TextView) convertView.findViewById(R.id.food_brand);
+        holder.foodCalories = (TextView) convertView.findViewById(R.id.food_calories);
+        holder.foodPrice = (TextView) convertView.findViewById(R.id.food_price);
+        holder.vegRating = (ImageView) convertView.findViewById(R.id.veg_rating);
+        holder.imageView = (ImageView) convertView.findViewById(R.id.food_image);
+        convertView.setTag(holder);
 
         // Populate the data into the template view using the data object
-        foodName.setText (currentFood.getFoodName());
-        foodBrand.setText (currentFood.getFoodBrand());
-        foodCalories.setText (String.valueOf(currentFood.getFoodCalories()));
-        foodPrice.setText (String.valueOf(currentFood.getFoodPrice()));
-        vegRating.setImageResource(currentFood.getRatingResId());
+        holder.foodName.setText (currentFood.getFoodName());
+        holder.foodBrand.setText (currentFood.getFoodBrand());
+        holder.foodCalories.setText (String.valueOf(currentFood.getFoodCalories()));
+        holder.foodPrice.setText (String.valueOf(currentFood.getFoodPrice()));
+        holder.vegRating.setImageResource(currentFood.getRatingResId());
+        holder.imageView.setImageResource(currentFood.getImageViewId());
 
         // Return the completed view to render on screen
         return convertView;
