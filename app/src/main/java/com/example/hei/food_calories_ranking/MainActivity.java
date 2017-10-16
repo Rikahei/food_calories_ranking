@@ -9,11 +9,9 @@ import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Spinner;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
     // Variable for Spinner set distance.
     public String userSetDistance;
 
+    private SeekBar seekBar;
+    private TextView seekBarValue;
+
     // Location request variable
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -74,19 +75,21 @@ public class MainActivity extends AppCompatActivity {
 
         createLocationRequest();
 
-        Spinner distanceSpinner = (Spinner) findViewById(R.id.distance_spinner);
-        // Create an ArrayAdapter using the string array and a default spinner layout
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.distance_array, android.R.layout.simple_spinner_item);
-        // Specify the layout to use when the list of choices appears
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        // Apply the adapter to the spinner
-        distanceSpinner.setAdapter(adapter);
+        seekBar = (SeekBar) findViewById(R.id.distance_seekbar);
+        seekBarValue = (TextView) findViewById(R.id.seekbar_textview);
+        seekBar.setOnSeekBarChangeListener( new OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                seekBarValue.setText(String.valueOf(progress));
+            }
 
-        // distanceSpinner onclick action
-        distanceSpinner.setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
-            public void onItemSelected(AdapterView adapterView, View view, int position, long id) {
-                Toast.makeText(MainActivity.this, "Range filter set to : " + adapterView.getSelectedItem().toString(), Toast.LENGTH_SHORT).show();
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
                 // Clear arraylist
                 foods.clear();
                 // Get user location
@@ -95,10 +98,6 @@ public class MainActivity extends AppCompatActivity {
                 getUserSetDistance();
                 // process AsyncTask to get api information
                 new GetMapData().execute();
-            }
-
-            public void onNothingSelected(AdapterView arg0) {
-                userSetDistance = "1000";
             }
         });
 
@@ -178,8 +177,8 @@ public class MainActivity extends AppCompatActivity {
 
     // get user spinner distance
     public String getUserSetDistance() {
-        Spinner spinner = (Spinner)findViewById(R.id.distance_spinner);
-        userSetDistance = spinner.getSelectedItem().toString();
+        TextView seekbarDistance = (TextView) findViewById(R.id.seekbar_textview);
+        userSetDistance = seekbarDistance.getText().toString();
         return userSetDistance;
     }
 
