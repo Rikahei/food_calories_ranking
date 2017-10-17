@@ -90,14 +90,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                // Clear arraylist
-                foods.clear();
-                // Get user location
-                getApiLoc();
-                // Get user set distance
-                getUserSetDistance();
-                // process AsyncTask to get api information
-                new GetMapData().execute();
+                handler.postDelayed(runnable, 1 * 1000);
             }
         });
 

@@ -28,6 +28,10 @@
             android:id="@+id/distance_seekbar"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
+            android:maxHeight="4dp"
+            android:minHeight="3dp"
+            android:progressDrawable="@drawable/seekbar_color"
+            android:thumbTint="@color/colorPrimaryDark"
             android:max="1500"
             android:progress="100" />
     </LinearLayout>
