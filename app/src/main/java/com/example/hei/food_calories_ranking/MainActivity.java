@@ -1,9 +1,11 @@
 package com.example.hei.food_calories_ranking;
 
 import android.Manifest;
+import android.app.LoaderManager;
+import android.app.LoaderManager.LoaderCallbacks;
+import android.content.Loader;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
@@ -13,7 +15,6 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
@@ -24,13 +25,11 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
+import static com.example.hei.food_calories_ranking.MapApiLoader.mapApiRestaurant;
 import static com.example.hei.food_calories_ranking.R.id.current_location_storage;
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
@@ -39,13 +38,13 @@ import static com.google.android.gms.location.LocationServices.getFusedLocationP
 // https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=35.7890371,139.8959144
 // &radius=500&type=restaurant&keyword=Gyudon%20Restaurant&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LoaderCallbacks <List<String>>{
 
     private String TAG = MainActivity.class.getSimpleName();
     // Variable for api location.
-    private String mApiLoc;
+    public static String mApiLoc;
     // Variable for Spinner set distance.
-    public String userSetDistance;
+    public static String userSetDistance;
 
     private SeekBar seekBar;
     private TextView seekBarValue;
@@ -53,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
     // Location request variable
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationClient;
+
+    private String MAP_API_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + mApiLoc +
+            "&radius=" + userSetDistance + "&type=restaurant&keyword=fastfood&Gyudon&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY";
 
     // Arraylist constructor for calories data.
     Food sukiya_i1 = new Food("牛丼-並盛", "すき家", 650, 350, 0, R.drawable.dish_ratio_00, R.drawable.gyuu_don_001);
@@ -82,15 +84,21 @@ public class MainActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 seekBarValue.setText(String.valueOf(progress));
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
             }
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                handler.postDelayed(runnable, 1 * 1000);
+                mapApiRestaurant.clear();
+                foods.clear();
+                // Get user location
+                getApiLoc();
+                // Get user set distance
+                getUserSetDistance();
+                // Force load MapApiLoader
+                LoaderManager loaderManager = getLoaderManager();
+                loaderManager.restartLoader(0, null, MainActivity.this);
+                loaderManager.initLoader(0, null, MainActivity.this).forceLoad();
             }
         });
 
@@ -122,7 +130,6 @@ public class MainActivity extends AppCompatActivity {
 
                             TextView currentLocationStorage = (TextView) findViewById(current_location_storage);
                             currentLocationStorage.setText(latitude + "," + longitude);
-                            Log.v("Tag", "currentLocation =_ " + currentLocationStorage);
                         }
                     }
                 });
@@ -149,14 +156,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             // Clear arraylist
+            mapApiRestaurant.clear();
             foods.clear();
             // Get user location
             getApiLoc();
             // Get user set distance
             getUserSetDistance();
             // process AsyncTask to get api information
-            new GetMapData().execute();
-            Log.v("Tag", "mApiLoc =_ " + mApiLoc);
+            LoaderManager loaderManager = getLoaderManager();
+            loaderManager.initLoader(0, null, MainActivity.this).forceLoad();
         }
     };
 
@@ -175,122 +183,53 @@ public class MainActivity extends AppCompatActivity {
         return userSetDistance;
     }
 
-    // AsyncTask to download json array.
-    public class GetMapData extends AsyncTask<String, Void, String> {
-        // Result storage variable.
-        String apiResult = null;
+    @Override
+    public Loader<List<String>> onCreateLoader(int id, Bundle args) {
+        Log.v("TAG", "Loader on createloader =_ ");
+        return new MapApiLoader(this, MAP_API_URL);
+    }
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            Toast.makeText(MainActivity.this, "Data is downloading", Toast.LENGTH_SHORT).show();
-        }
+    @Override
+    public void onLoadFinished(Loader<List<String>> loader, List<String> mapApiRestaurant) {
 
-        @Override
-        protected String doInBackground(String... arg0) {
-            HttpHandler sh = new HttpHandler();
-
-            // Making a request to url and getting response
-            String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + mApiLoc +
-                    "&radius=" + userSetDistance + "&type=restaurant&keyword=fastfood&Gyudon&key=AIzaSyAgE1lUCVlNpi7OyTG6sUzd-CKN-nPeanY";
-            String jsonStr = sh.makeServiceCall(url);
-
-            Log.e(TAG, "Response from url: " + jsonStr);
-            if (jsonStr != null) {
-                try {
-                    JSONObject jsonObj = new JSONObject(jsonStr);
-                    // Getting JSON Array node
-                    JSONArray jsonResult = jsonObj.getJSONArray("results");
-                    // looping through All Contacts
-                    for (int i = 0; i < jsonResult.length(); i++) {
-                        JSONObject currentData = jsonResult.getJSONObject(i);
-                        String name = currentData.getString("name");
-
-                        if (name.contains("すき家")){
-                            apiResult = apiResult + "すき家";
-                        }
-                        if (name.contains("松屋")){
-                            apiResult = apiResult + "松屋";
-                        }
-                        if (name.contains("吉野家")){
-                            apiResult = apiResult + "吉野家";
-                        }
-                        if (name.contains("マクドナルド")){
-                            apiResult = apiResult + "マクドナルド";
-                        }
-                        Log.d("Tag", "forLoop =_ " + name);
-                    }
-                } catch (final JSONException e) {
-                    Log.e(TAG, "Json parsing error: " + e.getMessage());
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(),
-                                    "Json parsing error: " + e.getMessage(),
-                                    Toast.LENGTH_LONG).show();
-                        }
-                    });
-                }
-            } else {
-                Log.e(TAG, "Couldn't get json from server.");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(),
-                                "Couldn't get json from server. Check LogCat for possible errors!",
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
+            // Algorithms for update UI
+            if (mapApiRestaurant.contains("すき家")) {
+                foods.add(sukiya_i1);
+                foods.add(sukiya_i2);
+                foods.add(sukiya_i3);
             }
-            return apiResult;
-        }
-
-            @Override
-            protected void onPostExecute (String apiResult){
-               // super.onPostExecute();
-
-                if (apiResult != null){
-                        // if logic for display data in UI.
-                        if (apiResult.contains("すき家")) {
-                            foods.add(sukiya_i1);
-                            foods.add(sukiya_i2);
-                            foods.add(sukiya_i3);
-                        }
-
-                        if (apiResult.contains("松屋")) {
-                            foods.add(matsuya_i1);
-                            foods.add(matsuya_i2);
-                            foods.add(matsuya_i3);
-                        }
-
-                        if (apiResult.contains("吉野家")) {
-                            foods.add(yoshinoya_i1);
-                            foods.add(yoshinoya_i2);
-                            foods.add(yoshinoya_i3);
-
-                        }
-// suspended Macdonald foods
-//                        if (apiResult.contains("マクドナルド")) {
-//                            foods.add(macdon_i1);
-//                            foods.add(macdon_i2);
-//                        }
-                    } else {
-                        Toast.makeText(MainActivity.this, "No restaurant was found", Toast.LENGTH_LONG).show();
-                        Log.v("TAG", "apiResult error :=_  " + apiResult);
-                }
-
-                // Sorts the array list
-                Collections.sort(foods);
-                // Sorts the array list using comparator
-                Collections.sort(foods, new Food());
-
-                // Create the adapter to convert the array to views
-                FoodAdapter adapter = new FoodAdapter(MainActivity.this, foods);
-                // Attach the adapter to a ListView
-                ListView listView = (ListView) findViewById(R.id.food_list_view);
-                listView.setAdapter(adapter);
+            if (mapApiRestaurant.contains("松屋")) {
+                foods.add(matsuya_i1);
+                foods.add(matsuya_i2);
+                foods.add(matsuya_i3);
             }
-        }
+
+            if (mapApiRestaurant.contains("吉野家")) {
+                foods.add(yoshinoya_i1);
+                foods.add(yoshinoya_i2);
+                foods.add(yoshinoya_i3);
+            }
+        Log.v(TAG, "onLoadFinisher=_ " );
+
+        // Sorts the array list
+        Collections.sort(foods);
+        // Sorts the array list using comparator
+        Collections.sort(foods, new Food());
+
+        // Create the adapter to convert the array to views
+        FoodAdapter adapter = new FoodAdapter(MainActivity.this, foods);
+        // Attach the adapter to a ListView
+        ListView listView = (ListView) findViewById(R.id.food_list_view);
+        listView.setAdapter(adapter);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<List<String>> loader) {
+        // Clear arraylist
+        mapApiRestaurant.clear();
+        foods.clear();
+        Log.v(TAG, "onLoaderReset=_ " );
+    }
 }
 
 
