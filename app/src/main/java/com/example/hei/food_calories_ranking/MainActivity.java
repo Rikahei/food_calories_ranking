@@ -43,9 +43,9 @@ public class MainActivity extends AppCompatActivity implements LoaderCallbacks <
     private String TAG = MainActivity.class.getSimpleName();
     // Variable for api location.
     public static String mApiLoc;
-    // Variable for Spinner set distance.
+    // Variable for SeekBar set distance.
     public static String userSetDistance;
-
+    // Variable for SeekBar
     private SeekBar seekBar;
     private TextView seekBarValue;
 
