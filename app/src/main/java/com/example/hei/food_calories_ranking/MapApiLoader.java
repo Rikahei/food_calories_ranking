@@ -44,7 +44,7 @@ public class MapApiLoader extends AsyncTaskLoader<List<String>> {
                 JSONObject jsonObj = new JSONObject(jsonStr);
                 // Getting JSON Array node
                 JSONArray jsonResult = jsonObj.getJSONArray("results");
-                // looping through All Contacts
+                // looping through All JSON objects
                 for (int i = 0; i < jsonResult.length(); i++) {
                     JSONObject currentData = jsonResult.getJSONObject(i);
                     String name = currentData.getString("name");

@@ -1,6 +1,5 @@
 package com.example.hei.food_calories_ranking;
 
-import android.Manifest;
 import android.app.LoaderManager;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.Loader;
@@ -15,6 +14,7 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static com.example.hei.food_calories_ranking.MapApiLoader.mapApiRestaurant;
 import static com.example.hei.food_calories_ranking.R.id.current_location_storage;
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
@@ -105,34 +107,37 @@ public class MainActivity extends AppCompatActivity implements LoaderCallbacks <
         // Get last know location
         mFusedLocationClient = getFusedLocationProviderClient(this);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        mFusedLocationClient.getLastLocation()
-                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            // New location has now been determined
-                            // Location Storage
-                            String latitude = Double.toString(location.getLatitude());
-                            String longitude = Double.toString(location.getLongitude());
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[] {ACCESS_COARSE_LOCATION,
+                                ACCESS_FINE_LOCATION}, 99
 
-                            TextView currentLocationStorage = (TextView) findViewById(current_location_storage);
-                            currentLocationStorage.setText(latitude + "," + longitude);
+                );
+            // Toast message to guide user restart application
+            Toast.makeText(getApplicationContext(),
+                    "Please restart application",
+                    Toast.LENGTH_LONG).show();
+        } else {
+            mFusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            // Got last known location. In some rare situations this can be null.
+                            if (location != null) {
+                                // New location has now been determined
+                                // Location Storage
+                                String latitude = Double.toString(location.getLatitude());
+                                String longitude = Double.toString(location.getLongitude());
+
+                                TextView currentLocationStorage = (TextView) findViewById(current_location_storage);
+                                currentLocationStorage.setText(latitude + "," + longitude);
+                            }
                         }
-                    }
-                });
+                    });
+        }
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
@@ -140,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements LoaderCallbacks <
         SettingsClient client = LocationServices.getSettingsClient(this);
         Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
 
-        handler.postDelayed(runnable, 1 * 1000);
+        handler.postDelayed(runnable, 1 * 500);
     }
 
     protected void createLocationRequest() {
