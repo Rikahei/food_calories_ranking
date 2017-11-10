@@ -1,5 +1,6 @@
 # Fast food calories ranking
-An Android appication build for ondiet users which eat fast food oftenly.
+This application is an android native application, API level 19.
+The application target is ondiet user which really cares about calories and food heathly. The application will recommend most heathly and less calories fast food meal to the user. When user start to run the application, the application try to get user location and requesting nearest information from google map api. The application recive map data and turn it into output value for the application. The food information will suggest to the user based on recived map data, and user can change the filter to find out the best information to them.
 
 ## Design Workflow
 ### Get known user location
