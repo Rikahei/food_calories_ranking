@@ -2,6 +2,15 @@
 This application is an android native application, API level 19.
 The application target is ondiet user which really cares about calories and food heathly. The application will recommend most heathly and less calories fast food meal to the user. When user start to run the application, the application try to get user location and requesting nearest information from google map api. The application recive map data and turn it into output value for the application. The food information will suggest to the user based on recived map data, and user can change the filter to find out the best information to them.
 
+## Function
+<p align="left">
+  <img width="250" height="450" src="https://raw.githubusercontent.com/Rikahei/food_calories_ranking/master/Screenshot_65m.png">
+  <img width="250" height="450" src="https://raw.githubusercontent.com/Rikahei/food_calories_ranking/master/Screenshot_1400m.png">
+</p>
+Search for nearest fastfood resturant and show the food calories.
+
+---
+
 ## Design Workflow
 ### Get known user location
 User location provided by Google service from FusedLocationProvider API.
