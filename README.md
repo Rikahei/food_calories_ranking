@@ -15,7 +15,7 @@ Search for nearest fastfood resturant and show the food calories.
 ### Get known user location
 User location provided by Google service from FusedLocationProvider API.
 ### Downloading Json Feedback from Google map API.
-Use Async Task to download Json Data in background to avoid UI freezing.
+Used Async Task to download Json Data in background to avoid UI freezing.
 ### Foods Data
 All data was collected on fast food resturant offical websites. Data update is not regularly and maybe out to date.
 ### Display Information
